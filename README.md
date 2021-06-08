@@ -1,4 +1,4 @@
-# git-stale -- lists stale branches and remove
+# git-stale -- list stale branches and remove
 
 ## Getting Started
 
@@ -14,5 +14,5 @@ git stale -d
 git stale -d -f
 ```
 
-* `-d`, `--delete`: removes gone branches.
+* `-d`, `--delete`: remove gone branches.
 * `-f`, `--force`: combined with `-d`, remove branches even if it wasn't merged.
