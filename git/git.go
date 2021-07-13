@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/oakcask/git-stale/git/cli"
 )
@@ -12,8 +13,9 @@ type Git interface {
 }
 
 type Branch struct {
-	Name RefName
-	Gone bool
+	Name       RefName
+	Gone       bool
+	CommitDate time.Time
 }
 
 type RefName string
