@@ -6,28 +6,58 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/oakcask/git-stale/git"
+	"github.com/oakcask/go-since"
 )
 
 type option struct {
 	delete   bool
 	force    bool
 	prefixes []string
+	since    *time.Time
 }
 
-func getOptions() option {
+func parseSince(s string) (*time.Time, error) {
+	if s == "" {
+		return nil, nil
+	}
+
+	dateString := strings.TrimSpace(s)
+
+	t, e := time.Parse("2006-01-02", dateString)
+	if e == nil {
+		return &t, nil
+	}
+
+	t, e = since.Since(dateString, time.Now())
+	if e == nil {
+		return &t, nil
+	}
+
+	return nil, fmt.Errorf("unrecognized date: %v", dateString)
+}
+
+func getOptions() (option, error) {
 	deleteLong := flag.Bool("delete", false, "delete stale branches")
 	deleteShort := flag.Bool("d", false, "short alias for --delete")
 	forceLong := flag.Bool("force", false, "force")
 	forceShort := flag.Bool("f", false, "short alias for --force")
+	since := flag.String("since", "", "select branches by last commit date")
 	flag.Parse()
+
+	sinceValue, err := parseSince(*since)
+	if err != nil {
+		return option{}, err
+	}
 
 	return option{
 		delete:   *deleteLong || *deleteShort,
 		force:    *forceLong || *forceShort,
 		prefixes: flag.Args(),
-	}
+		since:    sinceValue,
+	}, nil
 }
 
 func matchPrefix(s string, prefixes []string) bool {
@@ -59,7 +89,11 @@ func (c *actualGitCommand) Run(args ...string) error {
 }
 
 func main() {
-	opts := getOptions()
+	opts, e := getOptions()
+	if e != nil {
+		fmt.Println(e.Error())
+		os.Exit(1)
+	}
 
 	client, e := git.NewGit(&actualGitCommand{})
 	if e != nil {
@@ -74,9 +108,17 @@ func main() {
 	}
 
 	goneBranches := []git.RefName{}
-	for _, ref := range branches {
-		if ref.Gone && matchPrefix(string(ref.Name), opts.prefixes) {
-			goneBranches = append(goneBranches, ref.Name)
+	if opts.since == nil {
+		for _, ref := range branches {
+			if ref.Gone && matchPrefix(string(ref.Name), opts.prefixes) {
+				goneBranches = append(goneBranches, ref.Name)
+			}
+		}
+	} else {
+		for _, ref := range branches {
+			if ref.CommitDate.Sub(*opts.since) < 0 && matchPrefix(string(ref.Name), opts.prefixes) {
+				goneBranches = append(goneBranches, ref.Name)
+			}
 		}
 	}
 
