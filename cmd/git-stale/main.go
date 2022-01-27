@@ -30,12 +30,12 @@ func getOptions() option {
 type actualGitCommand struct{}
 
 func (c *actualGitCommand) Call(args ...string) ([]byte, error) {
-	cmd := exec.Command("git", args...)
+	cmd := exec.Command("git", args...) // #nosec G204
 	return cmd.Output()
 }
 
 func (c *actualGitCommand) Run(args ...string) error {
-	cmd := exec.Command("git", args...)
+	cmd := exec.Command("git", args...) // #nosec G204
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
