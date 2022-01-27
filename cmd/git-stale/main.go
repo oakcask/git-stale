@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/oakcask/git-stale/git"
 )
 
 type option struct {
-	delete bool
-	force  bool
+	delete   bool
+	force    bool
+	prefixes []string
 }
 
 func getOptions() option {
@@ -22,9 +24,24 @@ func getOptions() option {
 	flag.Parse()
 
 	return option{
-		delete: *deleteLong || *deleteShort,
-		force:  *forceLong || *forceShort,
+		delete:   *deleteLong || *deleteShort,
+		force:    *forceLong || *forceShort,
+		prefixes: flag.Args(),
 	}
+}
+
+func matchPrefix(s string, prefixes []string) bool {
+	if len(prefixes) < 1 {
+		return true
+	}
+
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(s, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 type actualGitCommand struct{}
@@ -58,7 +75,7 @@ func main() {
 
 	goneBranches := []git.RefName{}
 	for _, ref := range branches {
-		if ref.Gone {
+		if ref.Gone && matchPrefix(string(ref.Name), opts.prefixes) {
 			goneBranches = append(goneBranches, ref.Name)
 		}
 	}
