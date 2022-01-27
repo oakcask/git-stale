@@ -15,9 +15,9 @@ type option struct {
 }
 
 func getOptions() option {
-	deleteLong := flag.Bool("-delete", false, "delete stale branches")
+	deleteLong := flag.Bool("delete", false, "delete stale branches")
 	deleteShort := flag.Bool("d", false, "short alias for --delete")
-	forceLong := flag.Bool("-force", false, "force")
+	forceLong := flag.Bool("force", false, "force")
 	forceShort := flag.Bool("f", false, "short alias for --force")
 	flag.Parse()
 
