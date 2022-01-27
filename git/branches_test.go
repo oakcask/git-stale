@@ -3,6 +3,7 @@ package git
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/oakcask/git-stale/git/cli"
 )
@@ -22,6 +23,11 @@ func (c *fakeCommand) Run(args ...string) error {
 	return c.err
 }
 
+func stdISO8601(s string) time.Time {
+	t, _ := time.Parse("20060102T150405-0700", s)
+	return t
+}
+
 func TestGit_GetBranches(t *testing.T) {
 	testCases := []struct {
 		command     fakeCommand
@@ -29,29 +35,33 @@ func TestGit_GetBranches(t *testing.T) {
 	}{
 		{
 			fakeCommand{
-				out: `a, gone
-b, behind 1
-c, behind 1, ahead 2
-d
+				out: `a, Thu Feb 4 20:38:23 2021 +0900, gone
+b, Tue Mar 30 22:22:02 2021 +0900, behind 1
+c, Fri Apr 23 17:36:01 2021 +0900, behind 1, ahead 2
+d, Thu Jun 10 08:12:17 2021 +0900, 
 `,
 				err: nil,
 			},
 			[]Branch{
 				{
-					Name: RefName("a"),
-					Gone: true,
+					Name:       RefName("a"),
+					Gone:       true,
+					CommitDate: stdISO8601("20210204T203823+0900"),
 				},
 				{
-					Name: RefName("b"),
-					Gone: false,
+					Name:       RefName("b"),
+					Gone:       false,
+					CommitDate: stdISO8601("20210330T222202+0900"),
 				},
 				{
-					Name: RefName("c"),
-					Gone: false,
+					Name:       RefName("c"),
+					Gone:       false,
+					CommitDate: stdISO8601("20210423T173601+0900"),
 				},
 				{
-					Name: RefName("d"),
-					Gone: false,
+					Name:       RefName("d"),
+					Gone:       false,
+					CommitDate: stdISO8601("20210610T081217+0900"),
 				},
 			},
 		},
