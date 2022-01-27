@@ -15,12 +15,18 @@ git prune origin
 git stale -d
 ```
 
+Lists stale branches that have mathinng prefix:
+
+```
+git stale hotfix/ feature/
+```
+
 ## Options
 
 ```
-git stale
-git stale -d
-git stale -d -f
+git stale [prefix...]
+git stale -d [prefix...]
+git stale -d -f [prefix...]
 ```
 
 - `-d`, `--delete`: remove gone branches.
