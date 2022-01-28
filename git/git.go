@@ -9,13 +9,15 @@ import (
 
 type Git interface {
 	GetBranches() ([]Branch, error)
-	RemoveBranches(force bool, refnames ...RefName) error
+	RemoveBranches(force bool, branches ...Branch) error
+	RemoveRemoteBranches(force bool, branches ...Branch) error
 }
 
 type Branch struct {
 	Name       RefName
 	Gone       bool
 	CommitDate time.Time
+	RemoteName string
 }
 
 type RefName string

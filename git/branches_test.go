@@ -35,9 +35,9 @@ func TestGit_GetBranches(t *testing.T) {
 	}{
 		{
 			fakeCommand{
-				out: `a, Thu Feb 4 20:38:23 2021 +0900, gone
-b, Tue Mar 30 22:22:02 2021 +0900, behind 1
-c, Fri Apr 23 17:36:01 2021 +0900, behind 1, ahead 2
+				out: `a, Thu Feb 4 20:38:23 2021 +0900, origin, gone
+b, Tue Mar 30 22:22:02 2021 +0900, origin, behind 1
+c, Fri Apr 23 17:36:01 2021 +0900, origin, behind 1, ahead 2
 d, Thu Jun 10 08:12:17 2021 +0900, 
 `,
 				err: nil,
@@ -46,21 +46,25 @@ d, Thu Jun 10 08:12:17 2021 +0900,
 				{
 					Name:       RefName("a"),
 					Gone:       true,
+					RemoteName: "origin",
 					CommitDate: stdISO8601("20210204T203823+0900"),
 				},
 				{
 					Name:       RefName("b"),
 					Gone:       false,
+					RemoteName: "origin",
 					CommitDate: stdISO8601("20210330T222202+0900"),
 				},
 				{
 					Name:       RefName("c"),
 					Gone:       false,
+					RemoteName: "origin",
 					CommitDate: stdISO8601("20210423T173601+0900"),
 				},
 				{
 					Name:       RefName("d"),
 					Gone:       false,
+					RemoteName: "",
 					CommitDate: stdISO8601("20210610T081217+0900"),
 				},
 			},
@@ -85,17 +89,17 @@ func TestGit_RemoveBranches(t *testing.T) {
 
 	testCases := []struct {
 		force        bool
-		branches     []RefName
+		branches     []Branch
 		expectedRuns [][]string
 	}{
 		{
 			force:        false,
-			branches:     []RefName{},
+			branches:     []Branch{},
 			expectedRuns: nil,
 		},
 		{
 			force:    false,
-			branches: []RefName{RefName("a"), RefName("b")},
+			branches: []Branch{{Name: RefName("a")}, {Name: RefName("b")}},
 			expectedRuns: [][]string{
 				{"branch", "-d", "a", "b"},
 			},
@@ -107,6 +111,63 @@ func TestGit_RemoveBranches(t *testing.T) {
 		g := git{&fakeCmd, cli.Version{}}
 
 		err := g.RemoveBranches(tc.force, tc.branches...)
+
+		if err != nil {
+			t.Errorf("unexpectedly got error %v", err)
+		} else {
+			if len(fakeCmd.runs) != len(tc.expectedRuns) {
+				t.Errorf("expected %v time(s) but got %v time(s)", len(tc.expectedRuns), len(fakeCmd.runs))
+			} else if !reflect.DeepEqual(fakeCmd.runs, tc.expectedRuns) {
+				t.Errorf("expected runs are %v but got %v", tc.expectedRuns, fakeCmd.runs)
+			}
+		}
+	}
+}
+
+func TestGit_RemoveRemoteBranches(t *testing.T) {
+
+	testCases := []struct {
+		force        bool
+		branches     []Branch
+		expectedRuns [][]string
+	}{
+		{
+			force:        false,
+			branches:     []Branch{},
+			expectedRuns: nil,
+		},
+		{
+			force: false,
+			branches: []Branch{
+				{RemoteName: "origin", Name: RefName("a")},
+				{RemoteName: "origin", Name: RefName("b")},
+				{RemoteName: "upstream", Name: RefName("c")},
+				{RemoteName: "", Name: RefName("d")},
+			},
+			expectedRuns: [][]string{
+				{"push", "--delete", "origin", "a", "b"},
+				{"push", "--delete", "upstream", "c"},
+			},
+		},
+		{
+			force: true,
+			branches: []Branch{
+				{RemoteName: "origin", Name: RefName("a")},
+				{RemoteName: "upstream", Name: RefName("b")},
+				{RemoteName: "", Name: RefName("c")},
+			},
+			expectedRuns: [][]string{
+				{"push", "--delete", "-f", "origin", "a"},
+				{"push", "--delete", "-f", "upstream", "b"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		fakeCmd := fakeCommand{}
+		g := git{&fakeCmd, cli.Version{}}
+
+		err := g.RemoveRemoteBranches(tc.force, tc.branches...)
 
 		if err != nil {
 			t.Errorf("unexpectedly got error %v", err)
