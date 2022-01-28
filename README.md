@@ -21,10 +21,11 @@ Lists stale branches that have mathinng prefix:
 git stale hotfix/ feature/
 ```
 
-Lists abandand branches for 3 months least in local repo:
+Show local abandand branches at least 3 months passed, then do `git push --delete` for them:
 
 ```
 git stale --since 3mo
+git stale --since 3mo --delete --push
 ```
 
 ## Options
@@ -33,11 +34,14 @@ git stale --since 3mo
 git stale [prefix...]
 git stale -d [prefix...]
 git stale -d -f [prefix...]
+git stale --push -d [-f] [prefix...]
 ```
 
 - `-d`, `--delete`: remove selected branches.
 - `-f`, `--force`: combined with `-d`, remove branches even if it wasn't merged.
 - `--since <date>`: select branches which have older last commit date, instead selecting gone branches. Check out relative date format section.
+- `--push`: combined with `-d`, invokes `git push --delete` instead removing local branches.
+  `--force` also be passed to `git push` if `-f` is specified.
 
 As default, this command selects "gone" branches.
 

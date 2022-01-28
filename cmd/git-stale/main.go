@@ -17,6 +17,7 @@ type option struct {
 	force    bool
 	prefixes []string
 	since    *time.Time
+	push     bool
 }
 
 func parseSince(s string) (*time.Time, error) {
@@ -45,6 +46,7 @@ func getOptions() (option, error) {
 	forceLong := flag.Bool("force", false, "force")
 	forceShort := flag.Bool("f", false, "short alias for --force")
 	since := flag.String("since", "", "select branches by last commit date")
+	push := flag.Bool("push", false, "with -d option, execute `git push --delete` to remove remote branch")
 	flag.Parse()
 
 	sinceValue, err := parseSince(*since)
@@ -57,6 +59,7 @@ func getOptions() (option, error) {
 		force:    *forceLong || *forceShort,
 		prefixes: flag.Args(),
 		since:    sinceValue,
+		push:     *push,
 	}, nil
 }
 
@@ -107,22 +110,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	goneBranches := []git.RefName{}
+	goneBranches := []git.Branch{}
 	if opts.since == nil {
 		for _, ref := range branches {
 			if ref.Gone && matchPrefix(string(ref.Name), opts.prefixes) {
-				goneBranches = append(goneBranches, ref.Name)
+				goneBranches = append(goneBranches, ref)
 			}
 		}
 	} else {
 		for _, ref := range branches {
 			if ref.CommitDate.Sub(*opts.since) < 0 && matchPrefix(string(ref.Name), opts.prefixes) {
-				goneBranches = append(goneBranches, ref.Name)
+				goneBranches = append(goneBranches, ref)
 			}
 		}
 	}
 
-	if opts.delete {
+	if opts.delete && opts.push {
+		e = client.RemoveRemoteBranches(opts.force, goneBranches...)
+		if e != nil {
+			if _, ok := e.(*exec.ExitError); !ok {
+				fmt.Println(e.Error())
+			}
+
+			os.Exit(1)
+		}
+	} else if opts.delete {
 		e = client.RemoveBranches(opts.force, goneBranches...)
 		if e != nil {
 			if _, ok := e.(*exec.ExitError); !ok {
@@ -133,7 +145,7 @@ func main() {
 		}
 	} else {
 		for _, ref := range goneBranches {
-			fmt.Println(ref.String())
+			fmt.Println(ref.Name.String())
 		}
 	}
 }
