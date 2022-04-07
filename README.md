@@ -15,7 +15,7 @@ git prune origin
 git stale -d
 ```
 
-Lists stale branches that have mathinng prefix:
+Lists stale branches that have matching prefix:
 
 ```
 git stale hotfix/ feature/
