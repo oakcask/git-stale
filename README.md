@@ -11,7 +11,7 @@ go install github.com/oakcask/git-stale/cmd/git-stale@latest
 Cleaning up stale remote reference in local repo, then remove those stale branches:
 
 ```
-git prune origin
+git remote prune origin
 git stale -d
 ```
 
