@@ -6,17 +6,15 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: 
-          - 1.19.x
         platform:
           - ubuntu-latest
     runs-on: ${{ matrix.platform }}
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: ${{ matrix.go-version }}
     - name: Checkout
-      uses: actions/checkout@master
+      uses: actions/checkout@v3
+    - name: Install Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
     - name: Test
       run: go test ./...
