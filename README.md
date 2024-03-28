@@ -1,5 +1,8 @@
 # git-stale -- list stale branches and remove
 
+This repository will be archived.
+[git-toolbox](https://github.com/oakcask/git-toolbox) will inherit the legacy.
+
 ## Getting Started
 
 ```
